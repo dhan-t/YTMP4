@@ -1,0 +1,11 @@
+yt-dlp
+tqdm
+mutagen
+PySimpleGUI
+
+# Interactive CLI helper for arrow-key menus
+questionary
+
+# Notes:
+# - `ffmpeg` is required but is a system binary (install separately, add to PATH).
+# - `PySimpleGUI` is optional (only if you later want a simple GUI).
