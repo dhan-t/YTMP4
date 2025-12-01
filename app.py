@@ -93,6 +93,7 @@ class TerminalApp:
         self.selected_option = None
         self.fmt = None
         self.awaiting_url = False
+        self.awaiting_rerun = False
         self.cursor_visible = True
         self.blink_task = None
         self.last_key_time = 0
@@ -120,8 +121,8 @@ class TerminalApp:
         self.terminal.config(state=tk.NORMAL)
         
         # Write menu items with arrow cursor visible at start
-        self.terminal.insert(tk.END, "Use arrow keys ")
-        self.terminal.insert(tk.END, "↑↓", "yellow_bold")
+        self.terminal.insert(tk.END, "Use ")
+        self.terminal.insert(tk.END, "arrow keys", "yellow_bold")
         self.terminal.insert(tk.END, " to select, then press ")
         self.terminal.insert(tk.END, "Enter", "yellow_bold")
         self.terminal.insert(tk.END, "\n\n")
@@ -207,7 +208,7 @@ class TerminalApp:
     
     def on_up(self, event):
         """Handle up arrow"""
-        if self.awaiting_url:
+        if self.awaiting_url or self.awaiting_rerun:
             return "break"
         current_time = time.time()
         if current_time < self.last_key_time + self.key_delay:
@@ -220,7 +221,7 @@ class TerminalApp:
     
     def on_down(self, event):
         """Handle down arrow"""
-        if self.awaiting_url:
+        if self.awaiting_url or self.awaiting_rerun:
             return "break"
         current_time = time.time()
         if current_time < self.last_key_time + self.key_delay:
@@ -232,7 +233,7 @@ class TerminalApp:
         return "break"
     
     def on_return_menu(self, event):
-        """Handle return key on menu"""
+        """Handle return key on main menu"""
         if self.awaiting_url:
             self.handle_url_input(event)
             return "break"
@@ -258,23 +259,28 @@ class TerminalApp:
         self.terminal.focus_set()
         self.root.bind("<KeyPress>", self.on_key_press)
         self.root.bind("<Control-v>", self.on_paste)
+        self.root.bind("<Return>", self.on_return_menu)
     
     def on_key_press(self, event):
         """Handle key press while waiting for URL"""
         if event.keysym == "Return":
             self.handle_url_input(event)
         elif event.keysym == "BackSpace":
-            self.url_input = self.url_input[:-1]
-            content = self.terminal.get("1.0", tk.END)
-            lines = content.split("\n")
-            lines[-1] = "> " + self.url_input
-            self.terminal.delete("1.0", tk.END)
-            self.terminal.insert("1.0", "\n".join(lines))
-        elif event.keysym == "Control_L" or event.keysym == "Control_R":
+            if self.url_input:
+                self.url_input = self.url_input[:-1]
+                self.terminal.config(state=tk.NORMAL)
+                self.terminal.delete("end-2c", tk.END)
+                self.terminal.config(state=tk.DISABLED)
+        elif event.keysym == "Control_L" or event.keysym == "Control_R" or event.keysym == "v":
+            # Skip Control key presses and 'v' (paste key)
             pass
-        elif len(event.char) >= 1:
+        elif event.state & 0x4:  # Ctrl key pressed, skip all
+            return "break"
+        elif len(event.char) >= 1 and event.char.isprintable():
             self.url_input += event.char
+            self.terminal.config(state=tk.NORMAL)
             self.terminal.insert(tk.END, event.char)
+            self.terminal.config(state=tk.DISABLED)
         self.terminal.see(tk.END)
         return "break"
     
@@ -285,7 +291,9 @@ class TerminalApp:
         try:
             clipboard_text = self.root.clipboard_get()
             self.url_input += clipboard_text
+            self.terminal.config(state=tk.NORMAL)
             self.terminal.insert(tk.END, clipboard_text)
+            self.terminal.config(state=tk.DISABLED)
             self.terminal.see(tk.END)
         except tk.TclError:
             pass
@@ -303,8 +311,9 @@ class TerminalApp:
         
         self.write("")
         self.awaiting_url = False
-        self.terminal.unbind("<KeyPress>")
-        self.terminal.unbind("<Control-v>")
+        self.root.unbind("<KeyPress>")
+        self.root.unbind("<Control-v>")
+        self.root.unbind("<Return>")
         self.terminal.config(state=tk.DISABLED)
         
         # Start download in separate thread
@@ -405,10 +414,70 @@ class TerminalApp:
             self.write("")
             self.write("✓ Download completed!", tag="yellow_bold")
             self.write(f"✓ Saved to: {output_dir}")
+            self.show_rerun_menu()
         except Exception as e:
             self.write("")
             self.write("✗ Download failed:", tag="yellow_bold")
             self.write(f"✗ {str(e)}")
+            self.show_rerun_menu()
+
+    def on_up_rerun(self, event):
+        """Handle up arrow in rerun menu"""
+        current_time = time.time()
+        if current_time < self.last_key_time + self.key_delay:
+            return "break"
+        self.last_key_time = current_time
+        if self.selected_option > 0:
+            self.selected_option -= 1
+            self.update_menu_cursor()
+        return "break"
+    
+    def on_down_rerun(self, event):
+        """Handle down arrow in rerun menu"""
+        current_time = time.time()
+        if current_time < self.last_key_time + self.key_delay:
+            return "break"
+        self.last_key_time = current_time
+        if self.selected_option < 1:
+            self.selected_option += 1
+            self.update_menu_cursor()
+        return "break"
+    
+    def on_return_rerun(self, event):
+        """Handle return key on rerun menu"""
+        if self.selected_option == 0:
+            # Re-run: go back to URL input with same format
+            self.stop_cursor_blink()
+            self.awaiting_rerun = False
+            self.write("")
+            self.get_url()
+        else:
+            # Quit
+            self.root.quit()
+        return "break"
+
+    def show_rerun_menu(self):
+        """Show re-run or quit menu after download"""
+        self.terminal.config(state=tk.NORMAL)
+        self.write("")
+        self.write("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow_bold")
+        self.write(" [1] Re-run\n", "choice")
+        self.write(" [2] Quit\n", "choice")
+        self.write("")
+        
+        self.awaiting_rerun = True
+        self.selected_option = 0
+        self.rerun_line1_idx = self.terminal.search("[1]", "1.0")
+        self.rerun_line2_idx = self.terminal.search("[2]", self.rerun_line1_idx)
+        self.menu_line1_idx = self.rerun_line1_idx
+        self.menu_line2_idx = self.rerun_line2_idx
+        
+        self.terminal.config(state=tk.DISABLED)
+        self.update_menu_cursor()
+        self.start_cursor_blink()
+        self.root.bind("<Up>", self.on_up_rerun)
+        self.root.bind("<Down>", self.on_down_rerun)
+        self.root.bind("<Return>", self.on_return_rerun)
 
 def main():
     root = tk.Tk()
