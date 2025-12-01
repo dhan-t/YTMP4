@@ -1,4 +1,4 @@
-# YTMP4 — Lightweight YouTube/TikTok Downloader & Converter
+# Cutie Converter — Lightweight YouTube/TikTok Downloader & Converter
 
 A small, lightweight utility to download videos from YouTube or TikTok
 and convert them to high-quality MP3 or MP4 files while preserving

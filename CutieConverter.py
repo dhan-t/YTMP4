@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Converter App — Terminal-style popup with ASCII art using Tkinter
+Cutie Converter App — Terminal-style popup with ASCII art using Tkinter
 """
 import os
 import sys
@@ -12,7 +12,7 @@ import time
 
 # ASCII art (monochrome)
 ASCII_ART = """
-converter-app@nitro⠀⠀⠀⠀⠀⠀
+cutie-converter@nitro⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣤⣤⣤⣤⣄⣀⣀⠀⠀⠀⠀⠀⣠⠎⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣖⡉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⢠⣄⣀⣠⣤⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀
