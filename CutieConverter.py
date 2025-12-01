@@ -36,7 +36,7 @@ cutie-converter@nitro⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⢸⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢦⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⡼⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣆⠀⠀⠀⠀⠀⠀"""
 
-DEFAULT_OUTPUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "YTMP4")
+DEFAULT_OUTPUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "CutieConverter")
 YELLOW = "#FFD300"
 
 class TerminalApp:
